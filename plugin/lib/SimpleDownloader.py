@@ -178,8 +178,16 @@ class SimpleDownloader():
                     if status == 200:
                         if self.xbmcvfs.exists(item["path_incomplete"]):
                             self.common.log("Moving %s to %s" % (repr(item["path_incomplete"]), repr(item["path_complete"])))
-                            self.xbmcvfs.rename(item["path_incomplete"], item["path_complete"])
-                            self._showMessage(self.language(203), filename)
+                            if not self.xbmcvfs.rename(item["path_incomplete"], item["path_complete"]):
+                                self.common.log("Moving %s to %s failed, trying now to copy/delete..." % (repr(item["path_incomplete"]), repr(item["path_complete"])))
+                                if not self.xbmcvfs.copy(item["path_incomplete"], item["path_complete"]):
+                                    self.common.log("Download complete, but file %s can't be moved to the target directory" % (item["path_incomplete"]))
+                                    self._showMessage(self.language(204), "ERROR")
+                                else:
+                                    self._showMessage(self.language(203), filename)
+
+                                self.xbmcvfs.delete(item["path_incomplete"])
+                                    
                         else:
                             self.common.log("Download complete, but file %s not found" % repr(item["path_incomplete"]))
                             self._showMessage(self.language(204), "ERROR")
